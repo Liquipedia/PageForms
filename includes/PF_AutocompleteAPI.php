@@ -4,6 +4,8 @@
  * @ingroup PF
  */
 
+use MediaWiki\MediaWikiServices;
+
 /**
  * Adds and handles the 'pfautocomplete' action to the MediaWiki API.
  *
@@ -30,6 +32,8 @@ class PFAutocompleteAPI extends ApiBase {
 		$cargo_table = $params['cargo_table'];
 		$cargo_field = $params['cargo_field'];
 		$cargo_where = $params['cargo_where'];
+		$lpdbTable = $params[ 'lpdbTable' ];
+		$lpdbField = $params[ 'lpdbField' ];
 		$external_url = $params['external_url'];
 		$baseprop = $params['baseprop'];
 		$base_cargo_table = $params['base_cargo_table'];
@@ -43,7 +47,20 @@ class PFAutocompleteAPI extends ApiBase {
 
 		global $wgPageFormsUseDisplayTitle;
 		$map = false;
-		if ( $baseprop !== null ) {
+		if ( $lpdbTable !== null ) {
+			if ( !PFValuesUtils::checkLPDBTable( $lpdbTable ) ) {
+				$this->dieWithError( [ 'pageforms-invalid-lpdb-table', $lpdbTable ] );
+			}
+			if ( $lpdbField === null ) {
+				$this->dieWithError( [ 'pageforms-invalid-lpdb-field-required' ] );
+			}
+			if ( !PFValuesUtils::checkLPDBField( $lpdbTable, $lpdbField ) ) {
+				$this->dieWithError( [ 'pageforms-invalid-lpdb-field-table', $lpdbTable ] );
+			}
+			$this->getMain()->setCacheMode( 'public' );
+			$this->getMain()->setCacheMaxAge( 3600 );
+			$data = self::computeAllValuesForLPDB( $lpdbTable, $lpdbField, $substr );
+		} elseif ( $baseprop !== null ) {
 			if ( $property !== null ) {
 				$data = $this->getAllValuesForProperty( $property, null, $baseprop, $basevalue );
 			}
@@ -146,6 +163,8 @@ class PFAutocompleteAPI extends ApiBase {
 			'cargo_table' => null,
 			'cargo_field' => null,
 			'cargo_where' => null,
+			'lpdbTable' => null,
+			'lpdbField' => null,
 			'namespace' => null,
 			'external_url' => null,
 			'baseprop' => null,
@@ -182,6 +201,42 @@ class PFAutocompleteAPI extends ApiBase {
 			'api.php?action=pfautocomplete&substr=te&category=Authors',
 			'api.php?action=pfautocomplete&semantic_query=((Category:Test)) ((MyProperty::Something))',
 		];
+	}
+
+	private static function computeAllValuesForLPDB( $table, $field, $substring ) {
+		$config = MediaWikiServices::getInstance()->getMainConfig();
+		global $wgPageFormsAutocompleteOnAllChars;
+		$dbr = wfGetDB(
+			DB_REPLICA,
+			[],
+			$config->get( 'LiquipediaDBname' ) . '-' . $config->get( 'DBprefix' )
+		);
+		$whereStr = '(';
+		if ( $wgPageFormsAutocompleteOnAllChars ) {
+			$whereStr .= 'CONVERT(' . $dbr->addIdentifierQuotes( $field ) . ' USING utf8mb4) '
+				. $dbr->buildLike( $dbr->anyString(), strtolower( $substring ), $dbr->anyString() );
+		} else {
+			$whereStr .= 'CONVERT(' . $dbr->addIdentifierQuotes( $field ) . ' USING utf8mb4) '
+				. $dbr->buildLike( strtolower( $substring ), $dbr->anyString() );
+			$wordSeparators = [ ' ', '/', '(', ')', '-', '|', "\'", '"' ];
+			foreach ( $wordSeparators as $wordSeparator ) {
+				$whereStr .= ' OR ' . 'CONVERT(' . $dbr->addIdentifierQuotes( $field ) . ' USING utf8mb4) '
+					. $dbr->buildLike( $dbr->anyString(), strtolower( $wordSeparator . $substring ), $dbr->anyString() );
+			}
+		}
+		$whereStr .= ')';
+		$res = $dbr->select(
+			'lpdb_' . $table,
+			[ $field ],
+			[ $whereStr ],
+			__FUNCTION__,
+			[ 'ORDER BY' => $field . ' ASC', 'LIMIT' => 10 ]
+		);
+		$values = [];
+		foreach ( $res as $row ) {
+			$values[] = $row->$field;
+		}
+		return self::shiftExactMatch( $substring, $values );
 	}
 
 	private function processSemanticQuery( $query, $substr = '' ) {

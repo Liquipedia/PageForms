@@ -107,6 +107,17 @@ class PFTokensInput extends PFFormInput {
 				$delimiter = ',';
 			}
 		} else {
+			if ( array_key_exists( 'lpdbTable', $other_args ) ) {
+				if ( !PFValuesUtils::checkLPDBTable( $other_args[ 'lpdbTable' ] ) ) {
+					return wfMessage( 'pageforms-invalid-lpdb-table', $other_args[ 'lpdbTable' ] )->text();
+				}
+				if ( !array_key_exists( 'lpdbField', $other_args ) ) {
+					return wfMessage( 'pageforms-invalid-lpdb-field-required' )->text();
+				}
+				if ( !PFValuesUtils::checkLPDBField( $other_args[ 'lpdbTable' ], $other_args[ 'lpdbField' ] ) ) {
+					return wfMessage( 'pageforms-invalid-lpdb-field-table', $other_args[ 'lpdbTable' ] )->text();
+				}
+			}
 			list( $autocompleteSettings, $remoteDataType, $delimiter ) = PFValuesUtils::setAutocompleteValues( $other_args, true );
 		}
 

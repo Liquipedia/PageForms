@@ -388,8 +388,6 @@ END;
 		// https://www.regular-expressions.info/recurse.html
 		$pattern = '/{{(?>[^{}]|(?R))*?}}/';
 		// needed to fix highlighting - <?
-		// Remove HTML comments
-		$str = preg_replace( '/<!--.*?-->/s', '', $str );
 		$str = preg_replace_callback( $pattern, static function ( $match ) {
 			$hasPipe = strpos( $match[0], '|' );
 			return $hasPipe ? str_replace( "|", "\1", $match[0] ) : $match[0];
