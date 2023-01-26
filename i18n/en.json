@@ -309,5 +309,8 @@
 	"pf-invalidexturl": "Invalid external URL value.",
 	"pf-blankexturl": "Blank external URL value.",
 	"pf-externalpageempty": "External page contains no contents.",
-	"pf-externalpagebadjson": "Could not parse JSON in external page."
+	"pf-externalpagebadjson": "Could not parse JSON in external page.",
+	"pageforms-invalid-lpdb-table": "Invalid table $1",
+	"pageforms-invalid-lpdb-field-table": "Invalid field for table $1",
+	"pageforms-invalid-lpdb-field-required": "lpdbField parameter is missing"
 }

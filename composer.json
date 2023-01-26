@@ -35,25 +35,45 @@
 		}
 	},
 	"require-dev": {
-		"mediawiki/mediawiki-codesniffer": "40.0.1",
-		"mediawiki/mediawiki-phan-config": "0.12.0",
-		"mediawiki/minus-x": "1.1.1",
-		"php-parallel-lint/php-console-highlighter": "1.0.0",
-		"php-parallel-lint/php-parallel-lint": "1.3.2"
+		"liquipedia/sqllint": "*",
+		"mediawiki/mediawiki-codesniffer": "*",
+		"mediawiki/minus-x": "*",
+		"php-parallel-lint/php-parallel-lint": "*",
+		"php-parallel-lint/php-console-highlighter": "*"
 	},
 	"scripts": {
+		"lint": [
+			"parallel-lint --colors --exclude vendor ."
+		],
+		"phpcs": [
+			"phpcs -p -s"
+		],
+		"sqllint": [
+			"sqllint"
+		],
+		"minus-x": [
+			"minus-x check ."
+		],
 		"test": [
-			"parallel-lint . --exclude vendor --exclude node_modules",
-			"minus-x check .",
-			"@phpcs"
+			"composer minus-x",
+			"composer lint",
+			"composer phpcs",
+			"composer sqllint"
 		],
 		"fix": [
 			"minus-x fix .",
-			"phpcbf .",
 			"phpcbf"
 		],
-		"phpcs": "phpcs -p -s .",
-		"phan": "phan -d . --long-progress-bar"
+		"phpcs-junit": [
+			"phpcs --report=junit > report-phpcs.xml"
+		],
+		"sqllint-junit": [
+			"sqllint --report=junit > report-sqllint.xml"
+		],
+		"reports-junit": [
+			"composer phpcs-junit",
+			"composer sqllint-junit"
+		]
 	},
 	"config": {
 		"allow-plugins": {

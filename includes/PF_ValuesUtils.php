@@ -693,9 +693,176 @@ SERVICE wikibase:label { bd:serviceParam wikibase:language \"" . $wgLanguageCode
 		return $names_array;
 	}
 
+	public static function checkLPDBTable( $table ) {
+		return in_array( $table, [ 'player', 'team', 'tournament', 'placement' ] );
+	}
+
+	public static function checkLPDBField( $table, $field ) {
+		$fields = [
+			'team' => [
+				'pageid',
+				'pagename',
+				'namespace',
+				'objectname',
+				'name',
+				'location',
+				'location2',
+				'locations',
+				'region',
+				'logo',
+				'logourl',
+				'logodark',
+				'logodarkurl',
+				'textlesslogo',
+				'textlesslogourl',
+				'textlesslogodark',
+				'textlesslogodarkurl',
+				'createdate',
+				'disbanddate',
+				'earnings',
+				'template',
+				'links',
+				'coach',
+				'manager',
+				'sponsors',
+				'extradata'
+			],
+			'player' => [
+				'pageid',
+				'pagename',
+				'namespace',
+				'objectname',
+				'id',
+				'alternateid',
+				'name',
+				'romanizedname',
+				'localizedname',
+				'image',
+				'imageurl',
+				'type',
+				'nationality',
+				'nationality2',
+				'nationality3',
+				'region',
+				'birthdate',
+				'deathdate',
+				'team',
+				'teampagename',
+				'teamtemplate',
+				'links',
+				'status',
+				'earnings',
+				'extradata'
+			],
+			'tournament' => [
+				'pageid',
+				'pagename',
+				'namespace',
+				'objectname',
+				'name',
+				'shortname',
+				'tickername',
+				'banner',
+				'bannerurl',
+				'bannerdark',
+				'bannerdarkurl',
+				'icon',
+				'iconurl',
+				'icondark',
+				'icondarkurl',
+				'series',
+				'seriespage',
+				'previous',
+				'previous2',
+				'next',
+				'next2',
+				'game',
+				'mode',
+				'patch',
+				'endpatch',
+				'type',
+				'organizers',
+				'startdate',
+				'enddate',
+				'sortdate',
+				'location',
+				'location2',
+				'locations',
+				'venue',
+				'prizepool',
+				'participantsnumber',
+				'liquipediatier',
+				'liquipediatiertype',
+				'publishertier',
+				'status',
+				'maps',
+				'format',
+				'sponsors',
+				'extradata'
+			],
+			'placement' => [
+				'pageid',
+				'pagename',
+				'namespace',
+				'objectname',
+				'tournament',
+				'series',
+				'parent',
+				'parentname',
+				'shortname',
+				'image',
+				'imageurl',
+				'imagedark',
+				'imagedarkurl',
+				'startdate',
+				'date',
+				'participant',
+				'participantlink',
+				'participantflag',
+				'participanttemplate',
+				'players',
+				'placement',
+				'prizemoney',
+				'individualprizemoney',
+				'prizepoolindex',
+				'weight',
+				'mode',
+				'type',
+				'liquipediatier',
+				'liquipediatiertype',
+				'publishertier',
+				'icon',
+				'iconurl',
+				'icondark',
+				'icondarkurl',
+				'game',
+				'lastscore',
+				'lastvs',
+				'lastvsscore',
+				'opponentname',
+				'opponenttemplate',
+				'opponenttype',
+				'opponentplayers',
+				'groupscore',
+				'qualifier',
+				'qualifierpage',
+				'qualifierurl',
+				'qualified',
+				'extradata'
+			]
+		];
+		return in_array( $field, $fields[ $table ] );
+	}
+
 	public static function getAutocompletionTypeAndSource( &$field_args ) {
 		global $wgCapitalLinks;
-
+		if ( array_key_exists( 'lpdbTable', $field_args ) ) {
+			$fieldName = $field_args['lpdbField'];
+			$tableName = $field_args['lpdbTable'];
+			$autocompletionSource = "$tableName|$fieldName";
+			$autocompleteFieldType = 'lpdb';
+			return [ $autocompleteFieldType, $autocompletionSource ];
+		}
 		if ( array_key_exists( 'values from property', $field_args ) ) {
 			$autocompletionSource = $field_args['values from property'];
 			$autocompleteFieldType = 'property';
@@ -797,6 +964,9 @@ SERVICE wikibase:label { bd:serviceParam wikibase:language \"" . $wgLanguageCode
 		list( $autocompleteFieldType, $autocompletionSource ) =
 			self::getAutocompletionTypeAndSource( $field_args );
 		$autocompleteSettings = $autocompletionSource;
+		if ( $autocompleteFieldType === 'lpdb' ) {
+			return [ $autocompleteSettings, $autocompleteFieldType, ',' ];
+		}
 		if ( $is_list ) {
 			$autocompleteSettings .= ',list';
 			if ( array_key_exists( 'delimiter', $field_args ) ) {

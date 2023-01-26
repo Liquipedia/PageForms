@@ -380,7 +380,10 @@
 		var data_source = autocomplete_opts.autocompletesettings.split(',')[0];
 		var my_server = mw.util.wikiScript( 'api' );
 		var autocomplete_type = autocomplete_opts.autocompletedatatype;
-		if ( autocomplete_type === 'cargo field' ) {
+		if ( autocomplete_type === 'lpdb' ){
+			var tableAndField = data_source.split( '|' );
+			my_server += "?action=pfautocomplete&format=json&lpdbTable=" + tableAndField[0] + "&lpdbField=" + tableAndField[1];
+		} else if ( autocomplete_type === 'cargo field' ) {
 			var table_and_field = data_source.split('|');
 			my_server += "?action=pfautocomplete&format=json&cargo_table=" + table_and_field[0] + "&cargo_field=" + table_and_field[1];
 			if ( table_and_field.length > 2 ) {
@@ -391,7 +394,6 @@
 				autocomplete_opts.autocompletedatatype + "=" +
 				encodeURIComponent( data_source );
 		}
-
 		var ajaxOpts = {
 			url: my_server,
 			dataType: 'json',
