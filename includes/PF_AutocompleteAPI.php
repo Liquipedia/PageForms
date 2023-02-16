@@ -227,7 +227,7 @@ class PFAutocompleteAPI extends ApiBase {
 		$whereStr .= ')';
 		$res = $dbr->select(
 			'lpdb_' . $table,
-			[ $field ],
+			[ 'DISTINCT ' . $field ],
 			[ $whereStr ],
 			__FUNCTION__,
 			[ 'ORDER BY' => $field . ' ASC', 'LIMIT' => 10 ]
